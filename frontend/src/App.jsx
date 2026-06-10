@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 function App() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const chatEndRef = useRef(null);
+  useEffect(() => {
+  chatEndRef.current?.scrollIntoView({
+    behavior: "smooth",
+  });
+}, [messages]);
 
   const sendMessage = async () => {
     if (!message.trim()) return;
@@ -118,6 +124,7 @@ function App() {
             </div>
           </div>
         )}
+        <div ref={chatEndRef}></div>
       </div>
 
       <div
