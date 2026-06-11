@@ -1,54 +1,23 @@
 const express = require("express");
-const cors = require("cors");
-const axios = require("axios");
-require("dotenv").config();
+const dotenv = require("dotenv");
+const connectDB = require("./config/db");
+const authRoutes = require("./routes/authRoutes");
+
+dotenv.config();
+
+connectDB();
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
 
+app.use("/api/auth", authRoutes);
+
 app.get("/", (req, res) => {
-  res.send("AI Backend Running Successfully");
+  res.send("API Running...");
 });
 
-app.post("/chat", async (req, res) => {
-  const { message } = req.body;
-
-  try {
-    const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        model: "openai/gpt-oss-20b:free",
-        messages: [
-          {
-            role: "user",
-            content: message,
-          },
-        ],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const reply =
-      response.data.choices[0].message.content;
-
-    res.json({ reply });
-  } catch (error) {
-    console.log(error.response?.data || error.message);
-
-    res.json({
-      reply: "Error connecting to AI service.",
-    });
-  }
-});
-
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
