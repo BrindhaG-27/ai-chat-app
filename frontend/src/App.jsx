@@ -9,6 +9,8 @@ function App() {
   const [room, setRoom] = useState("");
   const [joinedRoom, setJoinedRoom] = useState("");
 
+  const [typingUser, setTypingUser] = useState("");
+
   const currentUser = "Priya";
 
   useEffect(() => {
@@ -16,8 +18,17 @@ function App() {
       setMessages((prev) => [...prev, msg]);
     });
 
+    socket.on("userTyping", (sender) => {
+      setTypingUser(`${sender} is typing...`);
+
+      setTimeout(() => {
+        setTypingUser("");
+      }, 2000);
+    });
+
     return () => {
       socket.off("receiveMessage");
+      socket.off("userTyping");
     };
   }, []);
 
@@ -88,7 +99,14 @@ function App() {
           type="text"
           placeholder="Type a message..."
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => {
+            setMessage(e.target.value);
+
+            socket.emit("typing", {
+              sender: currentUser,
+              room: joinedRoom,
+            });
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               sendMessage();
@@ -100,6 +118,12 @@ function App() {
           Send
         </button>
       </div>
+
+      {typingUser && (
+        <p style={{ color: "gray", fontStyle: "italic" }}>
+          {typingUser}
+        </p>
+      )}
 
       <h3>Messages</h3>
 

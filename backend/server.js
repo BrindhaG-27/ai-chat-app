@@ -38,6 +38,9 @@ io.on("connection", (socket) => {
     socket.join(room);
     console.log(`${socket.id} joined room: ${room}`);
   });
+  socket.on("typing", (data) => {
+  socket.to(data.room).emit("userTyping", data.sender);
+});
 
   // SEND MESSAGE
   socket.on("sendMessage", async (data) => {
