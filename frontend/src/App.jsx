@@ -5,10 +5,8 @@ import socket from "./socket/socket";
 function App() {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
-
   const [room, setRoom] = useState("");
   const [joinedRoom, setJoinedRoom] = useState("");
-
   const [typingUser, setTypingUser] = useState("");
 
   const currentUser = "Priya";
@@ -48,10 +46,8 @@ function App() {
 
       setMessages(res.data);
     } catch (error) {
-      console.error(error);
+      console.error("Error loading messages:", error);
     }
-
-    alert(`Joined room: ${room}`);
   };
 
   const sendMessage = () => {
@@ -74,12 +70,11 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "20px", maxWidth: "900px", margin: "0 auto" }}>
       <h1>Chat App</h1>
 
       <h3>Room: {joinedRoom || "No Room Joined"}</h3>
 
-      {/* ROOM SECTION */}
       <div style={{ marginBottom: "20px" }}>
         <input
           type="text"
@@ -88,13 +83,15 @@ function App() {
           onChange={(e) => setRoom(e.target.value)}
         />
 
-        <button onClick={joinRoom} style={{ marginLeft: "10px" }}>
+        <button
+          onClick={joinRoom}
+          style={{ marginLeft: "10px" }}
+        >
           Join Room
         </button>
       </div>
 
-      {/* CHAT SECTION */}
-      <div style={{ marginBottom: "10px" }}>
+      <div style={{ marginBottom: "15px" }}>
         <input
           type="text"
           placeholder="Type a message..."
@@ -102,25 +99,36 @@ function App() {
           onChange={(e) => {
             setMessage(e.target.value);
 
-            socket.emit("typing", {
-              sender: currentUser,
-              room: joinedRoom,
-            });
+            if (joinedRoom) {
+              socket.emit("typing", {
+                sender: currentUser,
+                room: joinedRoom,
+              });
+            }
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               sendMessage();
             }
           }}
+          style={{ width: "300px" }}
         />
 
-        <button onClick={sendMessage} style={{ marginLeft: "10px" }}>
+        <button
+          onClick={sendMessage}
+          style={{ marginLeft: "10px" }}
+        >
           Send
         </button>
       </div>
 
       {typingUser && (
-        <p style={{ color: "gray", fontStyle: "italic" }}>
+        <p
+          style={{
+            color: "gray",
+            fontStyle: "italic",
+          }}
+        >
           {typingUser}
         </p>
       )}
@@ -130,11 +138,10 @@ function App() {
       <div
         style={{
           border: "1px solid #ccc",
+          borderRadius: "10px",
           height: "400px",
           overflowY: "auto",
           padding: "10px",
-          marginTop: "10px",
-          borderRadius: "10px",
         }}
       >
         {messages.map((msg, index) => {
@@ -145,13 +152,17 @@ function App() {
               key={index}
               style={{
                 display: "flex",
-                justifyContent: isMine ? "flex-end" : "flex-start",
+                justifyContent: isMine
+                  ? "flex-end"
+                  : "flex-start",
                 marginBottom: "10px",
               }}
             >
               <div
                 style={{
-                  backgroundColor: isMine ? "#DCF8C6" : "#EAEAEA",
+                  backgroundColor: isMine
+                    ? "#DCF8C6"
+                    : "#EAEAEA",
                   padding: "10px",
                   borderRadius: "10px",
                   maxWidth: "60%",
