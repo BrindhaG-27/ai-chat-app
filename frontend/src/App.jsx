@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import socket from "./socket/socket";
 
 function App() {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
+
+  const [room, setRoom] = useState("");
+  const [joinedRoom, setJoinedRoom] = useState("");
+
+  const currentUser = "Priya";
 
   useEffect(() => {
     socket.on("receiveMessage", (msg) => {
@@ -15,31 +21,126 @@ function App() {
     };
   }, []);
 
+  const joinRoom = async () => {
+    if (!room.trim()) {
+      alert("Please enter a room name");
+      return;
+    }
+
+    socket.emit("joinRoom", room);
+    setJoinedRoom(room);
+
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/messages/${room}`
+      );
+
+      setMessages(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+
+    alert(`Joined room: ${room}`);
+  };
+
   const sendMessage = () => {
     if (!message.trim()) return;
 
-    socket.emit("sendMessage", message);
+    if (!joinedRoom) {
+      alert("Please join a room first");
+      return;
+    }
+
+    const msgData = {
+      text: message,
+      sender: currentUser,
+      room: joinedRoom,
+    };
+
+    socket.emit("sendMessage", msgData);
+
     setMessage("");
   };
 
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
       <h1>Chat App</h1>
 
-      <input
-        type="text"
-        placeholder="Type a message..."
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
+      <h3>Room: {joinedRoom || "No Room Joined"}</h3>
 
-      <button onClick={sendMessage}>Send</button>
+      {/* ROOM SECTION */}
+      <div style={{ marginBottom: "20px" }}>
+        <input
+          type="text"
+          placeholder="Enter room name"
+          value={room}
+          onChange={(e) => setRoom(e.target.value)}
+        />
+
+        <button onClick={joinRoom} style={{ marginLeft: "10px" }}>
+          Join Room
+        </button>
+      </div>
+
+      {/* CHAT SECTION */}
+      <div style={{ marginBottom: "10px" }}>
+        <input
+          type="text"
+          placeholder="Type a message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              sendMessage();
+            }
+          }}
+        />
+
+        <button onClick={sendMessage} style={{ marginLeft: "10px" }}>
+          Send
+        </button>
+      </div>
 
       <h3>Messages</h3>
 
-      {messages.map((msg, index) => (
-        <p key={index}>{msg}</p>
-      ))}
+      <div
+        style={{
+          border: "1px solid #ccc",
+          height: "400px",
+          overflowY: "auto",
+          padding: "10px",
+          marginTop: "10px",
+          borderRadius: "10px",
+        }}
+      >
+        {messages.map((msg, index) => {
+          const isMine = msg.sender === currentUser;
+
+          return (
+            <div
+              key={index}
+              style={{
+                display: "flex",
+                justifyContent: isMine ? "flex-end" : "flex-start",
+                marginBottom: "10px",
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: isMine ? "#DCF8C6" : "#EAEAEA",
+                  padding: "10px",
+                  borderRadius: "10px",
+                  maxWidth: "60%",
+                }}
+              >
+                <strong>{msg.sender}</strong>
+                <br />
+                {msg.text}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
